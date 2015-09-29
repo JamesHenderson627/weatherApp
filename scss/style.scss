@@ -73,3 +73,81 @@ img {
  * YOUR CODE HERE
  */
 
+#container {
+    position: relative;
+}
+
+#weatherWrap {
+    height: 500px;
+    width: 800px;
+    border: 2px solid black;
+    border-radius: 10px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #5C85FF;
+}
+
+#opener {
+    text-align: center;
+}
+
+#opener h1 {
+    font-family: 'Stardos Stencil', cursive;
+    color: #FFFFF9;
+    text-shadow: 10px 10px 20px #000000;
+}
+
+button {
+    background-color: #5C85FF;
+    color: #FFFFF9;
+}
+
+#wheelWrapper {
+    border: 2px solid blue;
+    border-radius: 10px;
+    height: 350px;
+    width: 800px;
+    position: relative;
+    margin-top: 1rem;
+}
+
+#buttonWrap {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+#wheel {
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    border: 2px solid black;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+i {
+    font-size: 75px;
+    font-weight: bold;
+    color: white;
+    position: absolute;
+    top: 37.5px;
+    left: 50%;
+    transform: translate(-50%,-50%);
+
+}
+// ===========Current View========
+#hourly {
+    text-align: center;
+}
+
+
+
+
+
+
+
