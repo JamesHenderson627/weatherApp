@@ -30,12 +30,46 @@ var WeatherModel = Backbone.Model.extend ({
 	}
 })
 // --------Views--------
-var CurrentWeather = Backbone.View.extend ({
-	el: "#wheelWrapper",
-
+// this[someV](parms)
+// 
+var InputView = Backbone.View.extend ({
+	el: "#opener",
+	
 	events: {
+		"click #daily": "getWeeklyView",
+		"click #current": "getCurrentView",
+		"click #hourly": "getHourlyView",
 		"keypress input": "getUserQuery"
 	},
+
+	getWeeklyView: function() {
+		location.hash = "showWeeklyView"
+		console.log("changing weekly hash")
+	},
+
+	getHourlyView: function() {
+		location.hash = "showHourlyView"
+		console.log("changing hourly hash")
+	},
+
+	getCurrentView: function() {
+		location.hash = "showCurrentView"
+		console.log("changing current hash")
+	},
+
+	getUserQuery: function(event) {
+		if (event.keyCode === 13) {
+			console.log('------',event)
+			location.hash = event.currentTarget.value
+		}
+	},
+
+	initialize: function(){}
+
+})
+new InputView
+var CurrentView = Backbone.View.extend ({
+	el: "#wheelWrapper",
 
 	getApparentTemp: function() {
 		return Math.floor(this.model.attributes.currently.apparentTemperature)
@@ -63,11 +97,6 @@ var CurrentWeather = Backbone.View.extend ({
 		console.log("Here comes the Current Weather!")
 		// console.log(this.model)
 		this.$el.html(`
-			<div id="buttonWrap">
-    			<button type="button">Current</button>
-    			<button type="button">Hourly</button>
-    			<button type="button">5 Day</button>
-    		</div>
 			<div id="current">
 				<p>Feels like ${this.getApparentTemp()}&#176;</p>
 				<p>The temperature is ${this.getActualTemp()}&#176;</p>
@@ -77,12 +106,10 @@ var CurrentWeather = Backbone.View.extend ({
 			`)
 	},
 
-	initialize: function(){
-		this.listenTo(this.model,'sync', this.render)
-	}
+	initialize: function(){}
 })
 
-var HourlyWeather = Backbone.View.extend({
+var HourlyView = Backbone.View.extend({
 	el: "#wheelWrapper",
 
 	getTemp: function(temp) {
@@ -118,22 +145,13 @@ var HourlyWeather = Backbone.View.extend({
 						<p>${self.getHumidity(hourlyData.humidity)}&#37; Humidity</p>\
 						</div>`
 		})
-		this.$el.html(`
-			<div id="buttonWrap">
-				<button type="button" id="b1">Current</button>
-				<button type="button" id="b2">Hourly</button>
-				<button type="button" id="b3">5 Day</button>
-			</div>
-			${htmlString}
-		`)
+		this.$el.html(`${htmlString}`)
 	},
 
-	initialize: function(){
-		this.listenTo(this.model,'sync', this.render)
-	}
+	initialize: function(){}
 })
 
-var WeeklyWeather = Backbone.View.extend({
+var WeeklyView = Backbone.View.extend({
 	el: "#wheelWrapper",
 
 	getTemp: function(temp) {
@@ -167,57 +185,58 @@ var WeeklyWeather = Backbone.View.extend({
 						</div>`
 		})
 
-		this.$el.html(`
-			<div id="buttonWrap">
-				<button type="button" id="b1">Current</button>
-				<button type="button" id="b2">Hourly</button>
-				<button type="button" id="b3">5 Day</button>
-			</div>
-			${htmlString}
-		`)
+		this.$el.html(`${htmlString}`)
 	},
 
-	initialize: function(){
-		this.listenTo(this.model,'sync', this.render)
-	},
+	initialize: function(){}
 })
 
 // --------ROUTER--------
 var WeatherRouter = Backbone.Router.extend ({
 	routes: {
-		//"api/:query": "showCurrentWeather",
-		"*anyquery": "showCurrentWeather"
+		"lat/:lat/long/:long": "showCurrentWeather",
+		"showHourlyView": "showHourlyView",
+		"showCurrentView": "showCurrentView",
+		"showWeeklyView": "showWeeklyView",
+		"*anyquery": "showCurrentView"
 	},
 
-	showCurrentWeather: function() {
+	fetcher: function() {
+		return this.wm.fetch({
+			dataType: "jsonp",
+			processData: true
+		})
+	},
+
+	showCurrentView: function(latss,longss) {
 		console.log("getting current weather")
-		this.view = new CurrentWeather({model:this.wm}),
-		this.wm.fetch ({
-			dataType: "jsonp",
-			processData: true	
+		var self = this
+		this.fetcher().success(function(){
+			self.cV.render()
 		})
 	},
 
-	showHourlyWeather: function() {
+	showHourlyView: function() {
 		console.log("getting hourly weather")
-		this.view = new HourlyWeather({model:this.wm})
-		this.wm.fetch ({
-			dataType: "jsonp",
-			processData: true
+		var self = this
+		this.fetcher().success(function(){
+			self.hV.render()
 		})
 	},
-
-	showWeeklylyWeather: function() {
+	
+	showWeeklyView: function() {
 		console.log("getting weekly weather")
-		this.view = new WeeklyWeather({model:this.wm})
-		this.wm.fetch ({
-			dataType: "jsonp",
-			processData: true
+		var self = this
+		this.fetcher().success(function(){
+			self.wV.render()
 		})
 	},
 
 	initialize: function() {
-		this.wm = new WeatherModel()
+		this.wm = new WeatherModel(),
+		this.wV = new WeeklyView({model:this.wm}),
+		this.hV = new HourlyView({model:this.wm}),
+		this.cV = new CurrentView({model:this.wm}),
 		Backbone.history.start()
 	}
 })
