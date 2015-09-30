@@ -75,29 +75,31 @@ img {
 
 #container {
     position: relative;
+    height: 600px;
+
+    #weatherWrap {
+        height: 500px;
+        width: 800px;
+        border: 2px solid black;
+        border-radius: 10px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: #5C85FF;
+
+        #opener {
+            text-align: center;
+        }
+
+        #opener h1 {
+            font-family: 'Stardos Stencil', cursive;
+            color: #FFFFF9;
+            text-shadow: 10px 10px 20px #000000;
+        }
+    }
 }
 
-#weatherWrap {
-    height: 500px;
-    width: 800px;
-    border: 2px solid black;
-    border-radius: 10px;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: #5C85FF;
-}
-
-#opener {
-    text-align: center;
-}
-
-#opener h1 {
-    font-family: 'Stardos Stencil', cursive;
-    color: #FFFFF9;
-    text-shadow: 10px 10px 20px #000000;
-}
 
 button {
     background-color: #5C85FF;
@@ -111,12 +113,6 @@ button {
     width: 800px;
     position: relative;
     margin-top: 1rem;
-}
-
-#buttonWrap {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
 }
 
 #wheel {
