@@ -30,8 +30,6 @@ var WeatherModel = Backbone.Model.extend ({
 	}
 })
 // --------Views--------
-// this[someV](parms)
-// 
 var InputView = Backbone.View.extend ({
 	el: "#opener",
 	
@@ -68,8 +66,9 @@ var InputView = Backbone.View.extend ({
 
 })
 new InputView
+
 var CurrentView = Backbone.View.extend ({
-	el: "#wheelWrapper",
+	el: "#weatherInfo",
 
 	getApparentTemp: function() {
 		return Math.floor(this.model.attributes.currently.apparentTemperature)
@@ -80,16 +79,21 @@ var CurrentView = Backbone.View.extend ({
 	},
 
 	getHumidity: function() {
-		return this.model.attributes.currently.humidity * 100
+		return Math.floor(this.model.attributes.currently.humidity * 100)
+	},
+
+	getSummary: function() {
+		return this.model.attributes.currently.summary
 	},
 
 	getTime: function() {
 		var d = new Date(this.model.attributes.currently.time * 1000)
-		//console.log(d.getHours())
+		var minutes = d.getMinutes()
+		if (minutes < 10) {minutes = 0 + minutes}
 		if (d.getHours() > 12) {
-			return (d.getHours() - 12) + ":" + d.getMinutes() + "PM"
+			return (d.getHours() - 12) + ":" + minutes + "PM"
 		} else {
-			return d.getHours() + ":" + d.getMinutes() + "AM"
+			return d.getHours() + ":" + minutes + "AM"
 		}
 	},
 
@@ -97,11 +101,12 @@ var CurrentView = Backbone.View.extend ({
 		console.log("Here comes the Current Weather!")
 		// console.log(this.model)
 		this.$el.html(`
-			<div id="current">
-				<p>Feels like ${this.getApparentTemp()}&#176;</p>
-				<p>The temperature is ${this.getActualTemp()}&#176;</p>
-				<p>There is ${this.getHumidity()}&#37; Humidity</p>
-				<p>The time is ${this.getTime()}</p>
+			<div id="currentTemp">\
+				<p>The temperature is ${this.getActualTemp()}&#176;</p>\
+				<p>${this.getSummary()}</p>\
+				<p>Feels like ${this.getApparentTemp()}&#176;</p>\
+				<p>There is ${this.getHumidity()}&#37; Humidity</p>\
+				<p>The time is ${this.getTime()}</p>\
 			</div>
 			`)
 	},
@@ -110,14 +115,14 @@ var CurrentView = Backbone.View.extend ({
 })
 
 var HourlyView = Backbone.View.extend({
-	el: "#wheelWrapper",
+	el: "#weatherInfo",
 
 	getTemp: function(temp) {
 		return Math.floor(temp)
 	},
 
 	getHumidity: function(humidity) {
-		return humidity * 100
+		return Math.floor(humidity * 100)
 	},
 
 	getTime: function(time) {
@@ -126,6 +131,10 @@ var HourlyView = Backbone.View.extend({
 		console.log(d.getHours())
 		if (d.getHours() > 12) {
 			return (d.getHours() - 12) + "PM"
+		} else if (d.getHours() === 12) {
+			return 12 + "PM"
+		} else if (d.getHours() === 24) {
+			return 12 + "AM"
 		} else {
 			return d.getHours() + "AM"
 		}
@@ -134,12 +143,12 @@ var HourlyView = Backbone.View.extend({
 	render: function() {
 		console.log("Here comes the Hourly Weather!")
 		console.log(this.model)
-		var hourlyArr = this.model.attributes.hourly.data.slice(0, 7),
+		var hourlyArr = this.model.attributes.hourly.data.slice(0, 8),
 			htmlString = "",
 			self = this
 		hourlyArr.forEach(function(hourlyData){
 			console.log(hourlyData)
-			htmlString += `<div id="hourly">\
+			htmlString += `<div id="hourlyTemp">\
 						<p>${self.getTime(hourlyData.time)}</p>\
 						<p>${self.getTemp(hourlyData.temperature)}&#176;</p>\
 						<p>${self.getHumidity(hourlyData.humidity)}&#37; Humidity</p>\
@@ -152,7 +161,7 @@ var HourlyView = Backbone.View.extend({
 })
 
 var WeeklyView = Backbone.View.extend({
-	el: "#wheelWrapper",
+	el: "#weatherInfo",
 
 	getTemp: function(temp) {
 		return Math.floor(temp)
@@ -177,14 +186,14 @@ var WeeklyView = Backbone.View.extend({
 			self = this
 		weeklyArr.forEach(function(weeklyData){
 			console.log(weeklyData)
-			htmlString += `<div id="weekly">\
+			htmlString += `<div id="weeklyTemp">\
 						<p>${self.getDay(weeklyData.time)}</p>\
 						<p>High&#58; ${self.getTemp(weeklyData.temperatureMax)}&#176;</p>\
 						<p>Low&#58; ${self.getTemp(weeklyData.temperatureMin)}&#176;</p>\
 						<p>${self.getHumidity(weeklyData.humidity)}&#37; Humidity</p>\
 						</div>`
 		})
-
+		console.log(htmlString)
 		this.$el.html(`${htmlString}`)
 	},
 
@@ -194,11 +203,11 @@ var WeeklyView = Backbone.View.extend({
 // --------ROUTER--------
 var WeatherRouter = Backbone.Router.extend ({
 	routes: {
-		"lat/:lat/long/:long": "showCurrentWeather",
+		"lat/:lat/long/:long": "showCurrentView",
 		"showHourlyView": "showHourlyView",
 		"showCurrentView": "showCurrentView",
 		"showWeeklyView": "showWeeklyView",
-		"*anyquery": "showCurrentView"
+		"*anyquery": "showHomeView"
 	},
 
 	fetcher: function() {
@@ -208,7 +217,7 @@ var WeatherRouter = Backbone.Router.extend ({
 		})
 	},
 
-	showCurrentView: function(latss,longss) {
+	showCurrentView: function(lat,lon) {
 		console.log("getting current weather")
 		var self = this
 		this.fetcher().success(function(){
