@@ -251,5 +251,3 @@ var WeatherRouter = Backbone.Router.extend ({
 })
 
 var thisRouter = new WeatherRouter()
-
-
