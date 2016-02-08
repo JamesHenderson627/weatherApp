@@ -20,12 +20,14 @@ console.log('loaded javascript')
     // new Router()
 // }
 
+var geocodeApi = "AIzaSyDRI-uKq_WlhB66Azm3e86bpg61xlzK6Co"
+
 // --------MODEL--------
 var WeatherModel = Backbone.Model.extend ({
-	url: "https://api.forecast.io/forecast/a8a1d6dd27dd4b8c77724d9b4743bcd2/29.7604,-95.3698",
+	url: "https://api.forecast.io/forecast/a8a1d6dd27dd4b8c77724d9b4743bcd2/",
 	
 	parse: function(responseData) {
-		console.log(responseData)
+		// console.log(responseData)
 		return responseData
 	}
 })
@@ -34,31 +36,34 @@ var InputView = Backbone.View.extend ({
 	el: "#opener",
 	
 	events: {
-		"click #daily": "getWeeklyView",
 		"click #current": "getCurrentView",
 		"click #hourly": "getHourlyView",
+		"click #daily": "getWeeklyView",
 		"keypress input": "getUserQuery"
-	},
-
-	getWeeklyView: function() {
-		location.hash = "showWeeklyView"
-		console.log("changing weekly hash")
-	},
-
-	getHourlyView: function() {
-		location.hash = "showHourlyView"
-		console.log("changing hourly hash")
+		
 	},
 
 	getCurrentView: function() {
-		location.hash = "showCurrentView"
+		//var latVal = document.querySelector(".lat").value
+		//var longVal = document.querySelector(".long").value
+		location.hash = "weather/" 
 		console.log("changing current hash")
+	},
+
+	getHourlyView: function() {
+		location.hash = "/hourly"
+		console.log("changing hourly hash")
+	},
+
+	getWeeklyView: function() {
+		location.hash = "/weekly"
+		console.log("changing weekly hash")
 	},
 
 	getUserQuery: function(event) {
 		if (event.keyCode === 13) {
 			console.log('------',event)
-			location.hash = event.currentTarget.value
+			location.hash = "weather/" + event.target.value
 		}
 	},
 
@@ -99,7 +104,7 @@ var CurrentView = Backbone.View.extend ({
 
 	render: function() {
 		console.log("Here comes the Current Weather!")
-		// console.log(this.model)
+		console.log(this.model)
 		this.$el.html(`
 			<div id="currentTemp">\
 				<p>The temperature is ${this.getActualTemp()}&#176;</p>\
@@ -203,40 +208,62 @@ var WeeklyView = Backbone.View.extend({
 // --------ROUTER--------
 var WeatherRouter = Backbone.Router.extend ({
 	routes: {
-		"lat/:lat/long/:long": "showCurrentView",
-		"showHourlyView": "showHourlyView",
-		"showCurrentView": "showCurrentView",
-		"showWeeklyView": "showWeeklyView",
+		"weather/:query": "showCurrentView",
+		":query/hourly": "showHourlyView",
+		":query/weekly": "showWeeklyView",
 		"*anyquery": "showHomeView"
 	},
 
-	fetcher: function() {
-		return this.wm.fetch({
-			dataType: "jsonp",
-			processData: true
-		})
+	doAjax: function(query) {
+		console.log(query)
+		var ajaxParams = {
+			url: "https://maps.googleapis.com/maps/api/geocode/json",
+			data: {
+				address: query,
+				key: geocodeApi
+			}
+		}
+		return $.ajax(ajaxParams)
 	},
 
-	showCurrentView: function(lat,lon) {
-		console.log("getting current weather")
+	fetcher: function(query) {
 		var self = this
-		this.fetcher().success(function(){
-			self.cV.render()
+		return self.doAjax(query).done(function(response){
+			// console.log(response)
+
+			var loc = response.results[0].geometry.location,
+				lat = loc.lat,
+				lng = loc.lng
+			
+			self.wm.fetch({
+				url: self.wm.url + `${lat},${lng}`,
+				dataType: "jsonp"
+			})
+		})
+		console.log("returning data")
+	},
+
+	showCurrentView: function(query) {
+		var self = this
+		console.log("getting current weather")
+		console.log(query)
+		this.fetcher(query).done(function(){
+			self.wV.render()
 		})
 	},
 
-	showHourlyView: function() {
+	showHourlyView: function(query) {
 		console.log("getting hourly weather")
 		var self = this
-		this.fetcher().success(function(){
-			self.hV.render()
+		this.fetcher(query).done(function(){
+			self.wV.render()
 		})
 	},
 	
-	showWeeklyView: function() {
+	showWeeklyView: function(query) {
 		console.log("getting weekly weather")
 		var self = this
-		this.fetcher().success(function(){
+		this.fetcher().done(function(){
 			self.wV.render()
 		})
 	},
